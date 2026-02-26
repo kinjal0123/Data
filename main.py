@@ -3,34 +3,44 @@ import numpy as np
 import pickle
 import requests
 
-
 # Configuration
-
 MODEL_FILE = "Model.pkl"
 INPUT_FILE = "amazon_bidding_27_cols.csv"
 OUTPUT_FILE = "predicted_bids.csv"
 RAINFOREST_API_KEY = "41CCD23CF84449F6B7F0CA75B4D1DC1B"
 
-
 # Load Trained Model
-
 with open(MODEL_FILE, "rb") as f:
     model = pickle.load(f)
 
-# Load Input Data
-
 df = pd.read_csv(INPUT_FILE)
-
-
-#  Manual Encoding
 
 df['Day_Type'] = df['Day_Type'].map({'Weekday':0, 'Weekend':1})
 
 
-#  Rainforest API - fetch competitor data
+# Rainforest API - search-based competitor fetch
 
-# Example function to get competitor price/rating/review
+def get_asin_by_name(product_name):
+    """Fetch ASIN using Rainforest API search"""
+    url = "https://api.rainforestapi.com/request"
+    params = {
+        "api_key": RAINFOREST_API_KEY,
+        "type": "search",
+        "amazon_domain": "amazon.in",
+        "search_term": product_name,
+        "sort_by": "relevance"
+    }
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        data = response.json()
+        asin = data['search_results'][0]['asin']  # take first search result
+        return asin
+    except Exception as e:
+        print(f"Error searching '{product_name}': {e}")
+        return None
+
 def fetch_competitor_data(asin):
+    """Fetch competitor price, rating, review count using ASIN"""
     url = "https://api.rainforestapi.com/request"
     params = {
         "api_key": RAINFOREST_API_KEY,
@@ -41,30 +51,33 @@ def fetch_competitor_data(asin):
     try:
         response = requests.get(url, params=params, timeout=10)
         data = response.json()
-        # Extract competitor info (simplified, example)
         comp_price = float(data['product']['buybox_winner']['price']['value'])
         comp_rating = float(data['product']['rating'])
         comp_review_count = int(data['product']['reviews']['total_reviews'])
         return comp_price, comp_rating, comp_review_count
     except Exception as e:
-        print(f" Error fetching ASIN {asin}: {e}")
-        # fallback: use original columns
+        print(f"Error fetching ASIN {asin}: {e}")
         return np.nan, np.nan, np.nan
 
+# Initialize competitor columns with default values
+df['Competitor_Price'] = 50.0
+df['Comp_Rating'] = 4.0
+df['Comp_Review_Count'] = 100
 
-#  Optional: update competitor columns with live API
-
-# Make sure df has 'ASIN' column for each product
+# Update competitor columns using search-based API
 for i, row in df.iterrows():
-    if 'ASIN' in df.columns:
-        comp_price, comp_rating, comp_review_count = fetch_competitor_data(row['ASIN'])
-        if not np.isnan(comp_price):
-            df.loc[i, 'Competitor_Price'] = comp_price
-            df.loc[i, 'Comp_Rating'] = comp_rating
-            df.loc[i, 'Comp_Review_Count'] = comp_review_count
+    product_name = row['Product_Name'] if 'Product_Name' in df.columns else None
+    if product_name:
+        asin = get_asin_by_name(product_name)
+        if asin:
+            comp_price, comp_rating, comp_review_count = fetch_competitor_data(asin)
+            if not np.isnan(comp_price):
+                df.loc[i, 'Competitor_Price'] = comp_price
+                df.loc[i, 'Comp_Rating'] = comp_rating
+                df.loc[i, 'Comp_Review_Count'] = comp_review_count
 
--
-#  Select Features for X
+
+# Select Features for X
 
 X_columns = [
     'Current_Bid', 'Actual_CPC', 'Suggested_Bid_Min', 'Suggested_Bid_Max',
@@ -91,14 +104,10 @@ X_columns = [
 
 X = df[X_columns].values
 
-
-#  Predict Optimal Bid
-
+# Predict Optimal Bid
 df['Optimal_Bid_Predicted'] = model.predict(X)
 
-
-#  Apply custom bid adjustment logics
-
+# Apply custom bid adjustment logics
 for i in range(len(df)):
     bid = df.loc[i, 'Optimal_Bid_Predicted']
     # 1. Confidence boost
@@ -110,11 +119,8 @@ for i in range(len(df)):
     # 3. Stock < 10 → cool down
     if df.loc[i, 'Inventory_Level'] < 10:
         bid *= 0.3
-    # 4. Stock high → no change (already handled)
     df.loc[i, 'Optimal_Bid_Predicted'] = round(bid, 2)
 
-
-#  Save Output
-
+# Save Output
 df.to_csv(OUTPUT_FILE, index=False)
-print(f"✅ Predictions saved to {OUTPUT_FILE}")
+print(f" Predictions saved to {OUTPUT_FILE}")

@@ -21,7 +21,7 @@ live_input = {
     'Comp_Review_Count': 1061,
     'Year': 2026,
     'Month': 1,
-    'Day': 1,
+    'Day': 2,
 
     # One-hot encoded values
     'Keyword_natural detox drink': 1,
