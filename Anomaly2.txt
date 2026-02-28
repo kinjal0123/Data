@@ -1,0 +1,25 @@
+
+Today, I researched and planned the development of a fully automated AI-driven campaign management system using our existing CSV campaign data and Rainforest API for competitor insights. The key steps explored include:
+
+1.  Data Collection & Integration:
+
+    Reading our campaign CSV files containing bids, ACOS, impressions, sales, etc.
+    Pulling competitor and market data via Rainforest API.
+    Combining internal campaign data with external competitor snapshots to create a unified dataset.
+
+2.  Transition from Rule-Based to ML-Based Approach:
+
+    Instead of using IF-ELSE rules for decision making, we explored building a machine learning decision engine.
+    Features are engineered from campaign performance trends (ACOS changes, sales trends, CPC spikes) and competitor metrics (price gaps, sponsored listings, competition intensity).
+    The trained ML model can predict optimal actions (Increase Bid / Decrease Bid / No Change) based on patterns in combined internal and external data.
+
+3.  Automation Workflow:
+
+    Data input → Feature Engineering → ML Model Prediction → Recommendation Generation → Export New CSV / Reports.
+    This pipeline can run automatically on a schedule, providing actionable bid adjustments and insights without manual intervention.
+
+4.  Next Steps & Scalability:
+
+    Prototype the ML model using static CSV data.
+    Once validated, extend the system to handle live campaign data for fully dynamic automation.
+    Explore continuous learning and feedback loops to improve model accuracy over time.

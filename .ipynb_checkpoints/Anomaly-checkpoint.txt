@@ -1,0 +1,71 @@
+Amazon Ads Anomaly Detection
+
+1️ Purpose:
+- Automatically detect unexpected changes in campaign, keyword, or ASIN performance.
+- Protect ad spend and business health before visible damage occurs.
+- Complement bid optimization: constraints handle known rules; anomaly detection handles unknown/early problems.
+
+2️ Business Value:
+- Early warning for ACOS spike, CVR drop, inventory issues, spend leaks, or conversion crashes.
+- Prevents loss even when bid optimization constraints (like ACOS target, inventory limit) are in place.
+- Helps detect issues like competitor pricing, listing problems, buy box loss, or traffic anomalies before profit impact.
+
+3️ Key Concept:
+- Bid Optimization: Maintains performance according to set rules/constraints.
+- Anomaly Detection: Monitors behaviour and flags abnormal patterns before rules are triggered.
+
+4️ Minimum Required Features / Columns:
+
+Model Input Features (for ML / statistical model):
+- impressions
+- clicks
+- spend
+- sales
+- orders
+- ctr
+- cpc
+- cvr
+- acos
+- roas
+- bid
+- inventory_level
+- stock_out_flag
+- organic_rank
+- impressions_change_1d
+- clicks_change_1d
+- spend_change_1d
+- sales_change_1d
+- orders_change_1d
+- ctr_change_1d
+- cvr_change_1d
+- acos_change_1d
+- ctr_7d_avg
+- cvr_7d_avg
+- acos_7d_avg
+- spend_7d_avg
+- sales_7d_avg
+
+Notes:
+- ID columns (campaign_id, ad_group_id, keyword, asin) are NOT used as input to the model, but kept in the dataset for tracking.
+- Time columns like date/day_of_week can be used for rolling metrics but not as direct model input.
+
+5️ Feature Types:
+- Performance Metrics: impressions, clicks, sales, ACOS, CVR etc.
+- Behaviour Change Metrics: day-over-day changes like sales_change_1d.
+- Stability Metrics: 7-day rolling averages like cvr_7d_avg.
+- Inventory / Organic Signals: inventory_level, stock_out_flag, organic_rank.
+
+6️ Model Type:
+- Unsupervised or statistical:
+   - Isolation Forest, One-Class SVM, Autoencoders
+   - Or simple rule-based thresholds for small-scale systems
+- Goal: Detect abnormal behaviour patterns, not predict a target.
+
+7️ Key Takeaways:
+- Even if bid optimization constraints are in place (like ACOS limit or inventory rule), anomaly detection is needed to catch **hidden or early-stage problems**.
+- Detects early signs of profit loss, market shifts, conversion drops, or traffic anomalies before ACOS or other KPIs visibly fail.
+- Complements bid optimization – protects business health, not just enforces rules.
+
+8️ Analogy:
+- Bid Optimization = Cruise Control (maintains speed/performance)
+- Anomaly Detection = Smoke Detector (alerts before problem becomes critical)
